@@ -2,6 +2,7 @@
 Retrain the YOLO model for your own dataset.
 """
 
+import tensorflow as tf
 import numpy as np
 import keras.backend as K
 from keras.layers import Input, Lambda
@@ -12,9 +13,11 @@ from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, Ear
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
 
+num_train_temp = 100
+num_val_temp = 20
 
 def _main():
-    annotation_path = 'train.txt'
+    annotation_path = 'Japan_train.txt'
     log_dir = 'logs/000/'
     classes_path = 'model_data/voc_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
@@ -41,11 +44,15 @@ def _main():
     val_split = 0.1
     with open(annotation_path) as f:
         lines = f.readlines()
-    np.random.seed(10101)
+    # np.random.seed(10101)
     np.random.shuffle(lines)
+    # lines= lines[:100]
     np.random.seed(None)
     num_val = int(len(lines)*val_split)
     num_train = len(lines) - num_val
+    first_range = 50
+    second_range = 25
+
 
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
@@ -54,16 +61,17 @@ def _main():
             # use custom yolo_loss Lambda layer.
             'yolo_loss': lambda y_true, y_pred: y_pred})
 
-        batch_size = 32
+        batch_size = 10
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
-                steps_per_epoch=max(1, num_train//batch_size),
-                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
-                validation_steps=max(1, num_val//batch_size),
-                epochs=50,
-                initial_epoch=0,
-                callbacks=[logging, checkpoint])
-        model.save_weights(log_dir + 'trained_weights_stage_1.h5')
+        for j in range(first_range):
+            model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+                    steps_per_epoch=max(1, num_train_temp//batch_size),
+                    validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+                    validation_steps=max(1, num_val_temp//batch_size),
+                    epochs=1,
+                    initial_epoch=0,
+                    callbacks=[logging, checkpoint])
+            model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
     # Unfreeze and continue training, to fine-tune.
     # Train longer if the result is not good.
@@ -75,14 +83,15 @@ def _main():
 
         batch_size = 32 # note that more GPU memory is required after unfreezing the body
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
-            steps_per_epoch=max(1, num_train//batch_size),
-            validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
-            validation_steps=max(1, num_val//batch_size),
-            epochs=100,
-            initial_epoch=50,
-            callbacks=[logging, checkpoint, reduce_lr, early_stopping])
-        model.save_weights(log_dir + 'trained_weights_final.h5')
+        for j in range(second_range):
+            model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+                steps_per_epoch=max(1, num_train_temp//batch_size),
+                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+                validation_steps=max(1, num_val_temp//batch_size),
+                epochs=1,
+                initial_epoch=0,
+                callbacks=[logging, checkpoint, reduce_lr, early_stopping])
+            model.save_weights(log_dir + 'trained_weights_final.h5')
 
     # Further training if needed.
 
@@ -182,9 +191,12 @@ def data_generator(annotation_lines, batch_size, input_shape, anchors, num_class
         yield [image_data, *y_true], np.zeros(batch_size)
 
 def data_generator_wrapper(annotation_lines, batch_size, input_shape, anchors, num_classes):
-    n = len(annotation_lines)
+    annotation_lines_temp = annotation_lines
+    np.random.shuffle(annotation_lines_temp)
+    annotation_lines_temp = annotation_lines_temp[:num_train_temp]
+    n = len(annotation_lines_temp)
     if n==0 or batch_size<=0: return None
-    return data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes)
+    return data_generator(annotation_lines_temp, batch_size, input_shape, anchors, num_classes)
 
 if __name__ == '__main__':
     _main()

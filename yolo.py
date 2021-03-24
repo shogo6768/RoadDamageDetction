@@ -18,12 +18,14 @@ from yolo3.utils import letterbox_image
 import os
 from keras.utils import multi_gpu_model
 
+import csv
+
 class YOLO(object):
     _defaults = {
-        "model_path": 'model_data/yolo.h5',
+        "model_path": 'logs/000/trained_weights_final.h5',
         "anchors_path": 'model_data/yolo_anchors.txt',
-        "classes_path": 'model_data/coco_classes.txt',
-        "score" : 0.3,
+        "classes_path": 'model_data/voc_classes.txt',
+        "score" : 0.08,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
         "gpu_num" : 1,
@@ -126,9 +128,18 @@ class YOLO(object):
 
         print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
+        if len(out_boxes)==0:
+            with open('test2.csv', 'a') as csv_file:
+                # fieldnames = ['image_name', 'label score', 'left', 'top', 'right', 'bottom' ]
+                writer = csv.writer(csv_file)
+                filepath = image.filename
+                writer.writerow([os.path.basename(filepath)])
+
+
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
+
 
         for i, c in reversed(list(enumerate(out_classes))):
             predicted_class = self.class_names[c]
@@ -146,6 +157,14 @@ class YOLO(object):
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
             print(label, (left, top), (right, bottom))
 
+            with open('test2.csv', 'a') as csv_file:
+                # fieldnames = ['image_name', 'label score', 'left', 'top', 'right', 'bottom' ]
+                writer = csv.writer(csv_file)
+                # writer.writeheader()
+                filepath = image.filename
+                writer.writerow([os.path.basename(filepath), label, left, top, right, bottom])
+    
+
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
             else:
@@ -161,7 +180,7 @@ class YOLO(object):
                 fill=self.colors[c])
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
             del draw
-
+     
         end = timer()
         print(end - start)
         return image

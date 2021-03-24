@@ -2,10 +2,11 @@ import sys
 import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
+import glob
 
 def detect_img(yolo):
-    while True:
-        img = input('Input image filename:')
+    imgs = glob.glob("./image/*")
+    for img in imgs:
         try:
             image = Image.open(img)
         except:
@@ -13,7 +14,7 @@ def detect_img(yolo):
             continue
         else:
             r_image = yolo.detect_image(image)
-            r_image.show()
+            # r_image.show()
     yolo.close_session()
 
 FLAGS = None
