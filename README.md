@@ -1,6 +1,6 @@
 ### Usage
 Use --help to see usage of yolo_video.py:
-```
+
 usage: yolo_video.py [-h] [--model MODEL] [--anchors ANCHORS]
                      [--classes CLASSES] [--gpu_num GPU_NUM] [--image]
                      [--input] [--output]
