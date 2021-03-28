@@ -4,6 +4,10 @@
 *.h5
 logs/
 *_test.py
+test1.csv
+test2.csv
+test1.txt
+test2.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -17,7 +17,7 @@ num_train_temp = 100
 num_val_temp = 20
 
 def _main():
-    annotation_path = 'Japan_train.txt'
+    annotation_path = 'image_train.txt'
     log_dir = 'logs/000/'
     classes_path = 'model_data/voc_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
@@ -50,8 +50,8 @@ def _main():
     np.random.seed(None)
     num_val = int(len(lines)*val_split)
     num_train = len(lines) - num_val
-    first_range = 50
-    second_range = 25
+    first_range = 150
+    second_range = 100
 
 
     # Train with frozen layers first, to get a stable loss.
@@ -61,7 +61,7 @@ def _main():
             # use custom yolo_loss Lambda layer.
             'yolo_loss': lambda y_true, y_pred: y_pred})
 
-        batch_size = 10
+        batch_size = 16
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         for j in range(first_range):
             model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),

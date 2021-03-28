@@ -5,7 +5,7 @@ from PIL import Image
 import glob
 
 def detect_img(yolo):
-    imgs = glob.glob("./image/*")
+    imgs = glob.glob("./image2/*")
     for img in imgs:
         try:
             image = Image.open(img)

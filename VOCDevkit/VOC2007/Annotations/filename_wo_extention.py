@@ -1,6 +1,6 @@
 import os
 
-data_list = os.listdir('./Japan')  
+data_list = os.listdir('./images')  
 
 print(data_list)
 

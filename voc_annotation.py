@@ -9,7 +9,7 @@ classes = ["D00", "D01", "D10", "D11", "D20", "D40", "D43", "D44",]
 country = "Japan"
 
 def convert_annotation(year, image_id, list_file):
-    in_file = open('VOCdevkit/VOC%s/Annotations/Japan/%s.xml'%(year, image_id))
+    in_file = open('VOCdevkit/VOC%s/Annotations/images/%s.xml'%(year, image_id))
     tree=ET.parse(in_file)
     root = tree.getroot()
 
@@ -29,9 +29,9 @@ wd = getcwd()
 
 for year, image_set in sets:
     image_ids = open('VOCdevkit/VOC%s/ImageSets/Main/%s.txt'%(year, image_set)).read().strip().split()
-    list_file = open('Japan_{}.txt'.format(image_set), 'w')
+    list_file = open('image_{}.txt'.format(image_set), 'w')
     for image_id in image_ids:
-        list_file.write('%s/VOCdevkit/VOC%s/JPEGImages/Japan/%s.jpg'%(wd, year, image_id))
+        list_file.write('%s/VOCdevkit/VOC%s/JPEGImages/images/%s.jpg'%(wd, year, image_id))
         convert_annotation(year, image_id, list_file)
         list_file.write('\n')
     list_file.close()
